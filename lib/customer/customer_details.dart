@@ -4,9 +4,8 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:get/get.dart';
 import 'package:signloop/Configurations/app_routes.dart';
 import 'package:signloop/models/customer.dart';
-import 'package:signloop/models/contract.dart';
 import 'package:signloop/providers/app_provider.dart';
-import '../components/custom_button.dart';
+
 
 class CustomerDetailsPage extends ConsumerStatefulWidget {
   final dynamic customerId; // Accepte un customerId (int)
