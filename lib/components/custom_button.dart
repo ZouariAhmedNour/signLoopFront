@@ -1,35 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:signloop/models/customer.dart';
+import 'package:signloop/providers/app_provider.dart';
 
-class CustomButton extends StatelessWidget {
+class CustomButton extends ConsumerWidget {
   final String text;
-  final VoidCallback onPressed;
-  final IconData? icon;
-  final Color? backgroundColor;
+  final Color backgroundColor;
+  final TextEditingController lastNameController;
+  final TextEditingController firstNameController;
+  final TextEditingController birthDateController;
+  final BuildContext context;
 
   const CustomButton({
     super.key,
     required this.text,
-    required this.onPressed,
-    this.icon,
-    this.backgroundColor,
+    required this.backgroundColor,
+    required this.lastNameController,
+    required this.firstNameController,
+    required this.birthDateController,
+    required this.context,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
+      onPressed: () {
+        final customer = Customer(
+          nom: lastNameController.text,
+          prenom: firstNameController.text,
+          birthdate: DateTime.parse(birthDateController.text),
+        );
+        ref.read(customerProvider.notifier).addCustomer(customer);
+        // Clear form
+        lastNameController.clear();
+        firstNameController.clear();
+        birthDateController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Client ajouté avec succès !')),
+        );
+      },
       style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? Color(0xFFB6D8F2),
+        backgroundColor: backgroundColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        elevation: 2,
       ),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(text, style: TextStyle(fontSize: 16)),
-          if (icon != null) ...[
-            SizedBox(width: 8),
-            Icon(icon),
-          ],
-        ],
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
       ),
     );
   }

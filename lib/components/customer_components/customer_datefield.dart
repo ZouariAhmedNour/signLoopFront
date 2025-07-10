@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 
-class CustomTextFormField extends StatelessWidget {
+class CustomerDateField extends StatelessWidget {
   final TextEditingController controller;
-  final String hintText;
-  final IconData prefixIcon;
-  final bool readOnly;
-  final VoidCallback? onTap;
-  final String? Function(String?)? validator;
+  final VoidCallback onTap;
 
-  const CustomTextFormField({
+  const CustomerDateField({
     super.key,
     required this.controller,
-    required this.hintText,
-    required this.prefixIcon,
-    this.readOnly = false,
-    this.onTap,
-    this.validator,
+    required this.onTap,
   });
 
   @override
@@ -29,14 +21,17 @@ class CustomTextFormField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
-          prefixIcon: Icon(prefixIcon, color: const Color(0xFF1976D2)),
+          hintText: 'Date de naissance (YYYY-MM-DD)',
+          prefixIcon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF1976D2)),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.calendar_today, color: Color(0xFF1976D2)),
+            onPressed: onTap,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          hintText: hintText,
         ),
-        readOnly: readOnly,
-        onTap: onTap,
-        validator: validator,
+        readOnly: true,
+        style: const TextStyle(color: Color(0xFF2D3748)),
       ),
     );
   }

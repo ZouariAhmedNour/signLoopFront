@@ -17,7 +17,7 @@ class Home extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF2E7D96),
+        backgroundColor: const Color(0xFF1976D2),
         elevation: 0,
         centerTitle: true,
       ),
@@ -27,8 +27,8 @@ class Home extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF2E7D96),
-              Color(0xFFB6D8F2),
+              Color(0xFF1976D2),
+              Color(0xFF66BB6A),
             ],
           ),
         ),
@@ -37,7 +37,7 @@ class Home extends StatelessWidget {
             children: [
               // Header Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
                     const Text(
@@ -53,7 +53,7 @@ class Home extends StatelessWidget {
                       'Gérez vos clients et contrats facilement',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -64,27 +64,37 @@ class Home extends StatelessWidget {
               // Cards Section
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    children: [
-                      _buildMenuCard(
-                        icon: Icons.people_rounded,
-                        title: 'Clients',
-                        subtitle: 'Gérer vos clients',
-                        color: const Color(0xFF4A90E2),
-                        onTap: () => Get.toNamed(AppRoutes.customerListPage),
-                      ),
-                      _buildMenuCard(
-                        icon: Icons.article_rounded,
-                        title: 'Contrats',
-                        subtitle: 'Gérer vos contrats',
-                        color: const Color(0xFF7B68EE),
-                        onTap: () => Get.toNamed(AppRoutes.contractPage),
-                      ),
-                    ],
+                  margin: const EdgeInsets.only(top: 20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF7FAFC),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20,
+                      children: [
+                        _buildMenuCard(
+                          icon: Icons.people_rounded,
+                          title: 'Clients',
+                          subtitle: 'Gérer vos clients',
+                          color: const Color(0xFF4A90E2),
+                          onTap: () => Get.toNamed(AppRoutes.customerListPage),
+                        ),
+                        _buildMenuCard(
+                          icon: Icons.article_rounded,
+                          title: 'Contrats',
+                          subtitle: 'Gérer vos contrats',
+                          color: const Color(0xFF7B68EE),
+                          onTap: () => Get.toNamed(AppRoutes.contractPage),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -110,7 +120,7 @@ class Home extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.15),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -137,7 +147,7 @@ class Home extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Color(0xFF2D3748),
               ),
             ),
             const SizedBox(height: 4),
@@ -145,7 +155,7 @@ class Home extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: const Color(0xFF718096),
               ),
               textAlign: TextAlign.center,
             ),

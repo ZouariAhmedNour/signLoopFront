@@ -1,0 +1,333 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:signloop/models/contract.dart';
+import 'package:signloop/providers/app_provider.dart';
+
+class UpdateContractPage extends ConsumerStatefulWidget {
+  final Contract contract;
+
+  const UpdateContractPage({super.key, required this.contract});
+
+  @override
+  ConsumerState<UpdateContractPage> createState() => _UpdateContractPageState();
+}
+
+class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _typeController = TextEditingController();
+  final _creationDateController = TextEditingController();
+  final _paymentModeController = TextEditingController();
+  int? _selectedCustomerId;
+
+  @override
+  void initState() {
+    super.initState();
+    _typeController.text = widget.contract.type ?? '';
+    _creationDateController.text = widget.contract.creationDate?.toIso8601String().split('T')[0] ?? '';
+    _paymentModeController.text = widget.contract.paymentMode ?? '';
+    _selectedCustomerId = widget.contract.customer?['customerId'] as int?;
+  }
+
+  @override
+  void dispose() {
+    _typeController.dispose();
+    _creationDateController.dispose();
+    _paymentModeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _creationDateController.text.isNotEmpty
+          ? DateTime.parse(_creationDateController.text)
+          : DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1976D2),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _creationDateController.text = picked.toIso8601String().split('T')[0];
+      });
+    }
+  }
+
+  void _saveContract() {
+    if (_formKey.currentState!.validate() && _selectedCustomerId != null) {
+      final contract = Contract(
+        contractId: widget.contract.contractId,
+        type: _typeController.text,
+        creationDate: DateTime.parse(_creationDateController.text),
+        paymentMode: _paymentModeController.text,
+        customer: {'customerId': _selectedCustomerId},
+      );
+      ref.read(contractProvider.notifier).updateContract(contract);
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final customers = ref.watch(customerProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          'Modifier un Contrat',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1976D2),
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1976D2),
+              Color(0xFF66BB6A),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Header Profile Section
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1976D2), Color(0xFF66BB6A)],
+                      ),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: const Icon(
+                      Icons.edit_outlined,
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Modifier Contrat',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Content Section
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.only(top: 20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF7FAFC),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Informations du contrat',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Client',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: DropdownButtonFormField<int>(
+                            value: _selectedCustomerId,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF1976D2)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              hintText: 'Sélectionner un client',
+                            ),
+                            dropdownColor: Colors.white,
+                            iconEnabledColor: const Color(0xFF1976D2),
+                            style: const TextStyle(color: Color(0xFF2D3744), fontSize: 16),
+                            items: customers.map<DropdownMenuItem<int>>((customer) {
+                              return DropdownMenuItem<int>(
+                                value: customer.customerId,
+                                child: Text('${customer.prenom} ${customer.nom} (ID: ${customer.customerId})'),
+                              );
+                            }).toList(),
+                            onChanged: (value) => setState(() => _selectedCustomerId = value),
+                            validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Type de contrat',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: TextFormField(
+                            controller: _typeController,
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.assignment_outlined, color: Color(0xFF1976D2)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              hintText: 'Ex: Journalier, Mensuel, Annuel',
+                            ),
+                            validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Date de création',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: TextFormField(
+                            controller: _creationDateController,
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.calendar_today_outlined, color: Color(0xFF1976D2)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              hintText: 'Sélectionner une date',
+                            ),
+                            readOnly: true,
+                            onTap: () => _selectDate(context),
+                            validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Mode de paiement',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: TextFormField(
+                            controller: _paymentModeController,
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.payment_outlined, color: Color(0xFF1976D2)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              hintText: 'Ex: Cash, Visa, Mastercard',
+                            ),
+                            validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: _saveContract,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1976D2),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.save, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Sauvegarder',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

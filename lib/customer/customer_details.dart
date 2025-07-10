@@ -6,7 +6,6 @@ import 'package:signloop/Configurations/app_routes.dart';
 import 'package:signloop/models/customer.dart';
 import 'package:signloop/providers/app_provider.dart';
 
-
 class CustomerDetailsPage extends ConsumerStatefulWidget {
   final dynamic customerId; // Accepte un customerId (int)
 
@@ -24,39 +23,57 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
   @override
   void initState() {
     super.initState();
-    try {
-      final customerList = ref.read(customerProvider);
-      final int effectiveIndex = widget.customerId is int
-          ? customerList.indexWhere((c) => c.customerId == widget.customerId)
-          : (widget.customerId as int? ?? 0);
-      final customer = effectiveIndex != -1
-          ? customerList[effectiveIndex]
-          : customerList.firstWhere(
-              (c) => c.customerId == widget.customerId,
-              orElse: () => Customer(nom: '', prenom: '', birthdate: DateTime.now(), contracts: []),
-            );
-      _lastNameController = TextEditingController(text: customer.nom ?? '');
-      _firstNameController = TextEditingController(text: customer.prenom ?? '');
-      _birthDateController = TextEditingController(text: customer.birthdate?.toIso8601String().split('T')[0] ?? '');
-      print('✅ Initialized with customer: ${customer.nom} ${customer.prenom}, customerId: ${widget.customerId}');
-    } catch (e) {
-      print('❌ Error initializing customer details: $e');
-      _lastNameController = TextEditingController();
-      _firstNameController = TextEditingController();
-      _birthDateController = TextEditingController();
+    final customerList = ref.read(customerProvider);
+    if (customerList.isEmpty) {
+      _initializeEmptyControllers();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         AwesomeDialog(
           context: context,
           dialogType: DialogType.error,
           animType: AnimType.bottomSlide,
           title: 'Erreur',
-          desc: 'Client non trouvé : $e',
+          desc: 'Aucun client trouvé dans la liste.',
+          btnOkOnPress: () {
+            Get.back();
+          },
+        ).show();
+      });
+      return;
+    }
+    try {
+      final int effectiveIndex = widget.customerId is int
+          ? customerList.indexWhere((c) => c.customerId == widget.customerId)
+          : 0; // Fallback to first if not int
+      final customer = effectiveIndex != -1
+          ? customerList[effectiveIndex]
+          : customerList.firstWhere(
+              (c) => c.customerId == widget.customerId,
+              orElse: () => Customer(nom: '', prenom: '', birthdate: DateTime.now(), contracts: []),
+            );
+      _lastNameController = TextEditingController(text: customer.nom.isEmpty ? '' : customer.nom);
+      _firstNameController = TextEditingController(text: customer.prenom.isEmpty ? '' : customer.prenom);
+      _birthDateController = TextEditingController(text: customer.birthdate?.toIso8601String().split('T')[0] ?? DateTime.now().toIso8601String().split('T')[0]);
+    } catch (e) {
+      _initializeEmptyControllers();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.error,
+          animType: AnimType.bottomSlide,
+          title: 'Erreur',
+          desc: 'Erreur lors de l\'initialisation : $e',
           btnOkOnPress: () {
             Get.back();
           },
         ).show();
       });
     }
+  }
+
+  void _initializeEmptyControllers() {
+    _lastNameController = TextEditingController();
+    _firstNameController = TextEditingController();
+    _birthDateController = TextEditingController(text: DateTime.now().toIso8601String().split('T')[0]);
   }
 
   @override
@@ -71,15 +88,15 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _birthDateController.text.isNotEmpty
-          ? DateTime.parse(_birthDateController.text)
+          ? DateTime.tryParse(_birthDateController.text) ?? DateTime.now()
           : DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: const Color(0xFF2E7D96),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1976D2),
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -96,23 +113,32 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
   }
 
   void _updateCustomer() async {
-    print('✅ Starting update for customerId: ${widget.customerId}');
+    if (_lastNameController.text.isEmpty || _firstNameController.text.isEmpty || _birthDateController.text.isEmpty) {
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.bottomSlide,
+        title: 'Erreur',
+        desc: 'Veuillez remplir tous les champs.',
+        btnOkOnPress: () {},
+      ).show();
+      return;
+    }
     try {
       final customerList = ref.read(customerProvider);
       final int customerIndex = customerList.indexWhere((c) => c.customerId == widget.customerId);
       if (customerIndex == -1) {
-        print('❌ Customer not found with customerId: ${widget.customerId}');
         throw Exception('Customer not found');
       }
       final customer = customerList[customerIndex];
+      final DateTime birthDate = DateTime.tryParse(_birthDateController.text) ?? DateTime.now();
       final updatedCustomer = Customer(
         customerId: customer.customerId,
         nom: _lastNameController.text,
         prenom: _firstNameController.text,
-        birthdate: DateTime.parse(_birthDateController.text),
+        birthdate: birthDate,
         contracts: customer.contracts ?? [],
       );
-      print('✅ Updating customer: ${updatedCustomer.nom} ${updatedCustomer.prenom}');
       await ref.read(customerProvider.notifier).updateCustomer(updatedCustomer);
       AwesomeDialog(
         context: context,
@@ -125,7 +151,6 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
         },
       ).show();
     } catch (e) {
-      print('❌ Error updating customer: $e');
       AwesomeDialog(
         context: context,
         dialogType: DialogType.error,
@@ -138,7 +163,6 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
   }
 
   void _deleteCustomer() {
-    print('✅ Starting delete for customerId: ${widget.customerId}');
     AwesomeDialog(
       context: context,
       dialogType: DialogType.warning,
@@ -150,8 +174,9 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
       btnCancelOnPress: () {},
       btnOkOnPress: () async {
         try {
-          final int effectiveId = widget.customerId is int ? widget.customerId : ref.read(customerProvider)[widget.customerId as int? ?? 0].customerId ?? widget.customerId as int;
-          print('✅ Deleting customer with id: $effectiveId');
+          final int effectiveId = widget.customerId is int
+              ? widget.customerId
+              : ref.read(customerProvider).firstWhere((c) => c.customerId == widget.customerId, orElse: () => Customer(customerId: widget.customerId as int, nom: '', prenom: '', birthdate: DateTime.now(), contracts: [])).customerId;
           await ref.read(customerProvider.notifier).deleteCustomer(effectiveId);
           AwesomeDialog(
             context: context,
@@ -164,7 +189,6 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
             },
           ).show();
         } catch (e) {
-          print('❌ Error deleting customer: $e');
           AwesomeDialog(
             context: context,
             dialogType: DialogType.error,
@@ -183,7 +207,7 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
     final customerList = ref.watch(customerProvider);
     final int effectiveIndex = widget.customerId is int
         ? customerList.indexWhere((c) => c.customerId == widget.customerId)
-        : (widget.customerId as int? ?? 0);
+        : 0; // Fallback to first if not int
     final customer = effectiveIndex != -1
         ? customerList[effectiveIndex]
         : customerList.firstWhere(
@@ -201,7 +225,7 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF2E7D96),
+        backgroundColor: const Color(0xFF1976D2),
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -215,8 +239,8 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF2E7D96),
-              Color(0xFFB6D8F2),
+              Color(0xFF1976D2),
+              Color(0xFF66BB6A),
             ],
           ),
         ),
@@ -224,13 +248,15 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
           children: [
             // Header Profile Section
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1976D2), Color(0xFF66BB6A)],
+                      ),
                       borderRadius: BorderRadius.circular(100),
                     ),
                     child: const Icon(
@@ -253,7 +279,7 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
                     'ID: ${customer.customerId ?? 'N/A'}',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -263,25 +289,25 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
             // Content Section
             Expanded(
               child: Container(
+                margin: const EdgeInsets.only(top: 20),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFF7FAFC),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
                   ),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Form Section
                       const Text(
                         'Informations personnelles',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Color(0xFF2D3748),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -324,7 +350,7 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: Color(0xFF2D3748),
                               ),
                             ),
                           ],
@@ -344,7 +370,7 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
                               icon: const Icon(Icons.edit_rounded),
                               label: const Text('Modifier'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4A90E2),
+                                backgroundColor: const Color(0xFF1976D2),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
@@ -393,9 +419,9 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: TextFormField(
         controller: controller,
@@ -403,17 +429,17 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
         onTap: onTap,
         style: const TextStyle(
           fontSize: 16,
-          color: Colors.black87,
+          color: Color(0xFF2D3748),
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.grey[600],
+          labelStyle: const TextStyle(
+            color: Color(0xFF718096),
             fontWeight: FontWeight.w500,
           ),
           prefixIcon: Icon(
             icon,
-            color: const Color(0xFF2E7D96),
+            color: const Color(0xFF1976D2),
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -430,14 +456,11 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(
-          color: const Color(0xFF7B68EE).withOpacity(0.2),
-        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -446,12 +469,14 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF7B68EE).withOpacity(0.1),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1976D2), Color(0xFF66BB6A)],
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.description_rounded,
-                color: Color(0xFF7B68EE),
+                color: Colors.white,
                 size: 24,
               ),
             ),
@@ -465,22 +490,22 @@ class _CustomerDetailsPageState extends ConsumerState<CustomerDetailsPage> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color(0xFF2D3748),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Créé le: ${contract.creationDate?.toIso8601String().split('T')[0] ?? "N/A"}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: Color(0xFF718096),
                     ),
                   ),
                   Text(
                     'Paiement: ${contract.paymentMode ?? "N/A"}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: Color(0xFF718096),
                     ),
                   ),
                 ],

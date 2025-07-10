@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signloop/models/customer.dart';
-import '../components/custom_button.dart';
 import '../components/textformfield.dart';
+import '../components/custom_button.dart';
 import '../providers/app_provider.dart';
-
 
 class CustomerPage extends ConsumerWidget {
   const CustomerPage({super.key});
+
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFB6D8F2),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      controller.text = picked.toIso8601String().split('T')[0];
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,39 +54,33 @@ class CustomerPage extends ConsumerWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            CustomTextForm(
-              hinttext: 'Nom',
-              mycontroller: lastNameController,
+            CustomTextFormField(
+              controller: lastNameController,
+              hintText: 'Nom',
+              prefixIcon: Icons.person_outline,
             ),
             const SizedBox(height: 10),
-            CustomTextForm(
-              hinttext: 'Prénom',
-              mycontroller: firstNameController,
+            CustomTextFormField(
+              controller: firstNameController,
+              hintText: 'Prénom',
+              prefixIcon: Icons.person_outline,
             ),
             const SizedBox(height: 10),
-            CustomTextForm(
-              hinttext: 'Date de naissance (YYYY-MM-DD)',
-              mycontroller: birthDateController,
+            CustomTextFormField(
+              controller: birthDateController,
+              hintText: 'Date de naissance (YYYY-MM-DD)',
+              prefixIcon: Icons.calendar_today_outlined,
+              readOnly: true,
+              onTap: () => _selectDate(context, birthDateController),
             ),
             const SizedBox(height: 20),
             CustomButton(
               text: 'Ajouter',
-              onPressed: () {
-                final customer = Customer(
-                  nom: lastNameController.text,
-                  prenom: firstNameController.text,
-                  birthdate: DateTime.parse(birthDateController.text),
-                );
-                ref.read(customerProvider.notifier).addCustomer(customer);
-                // Clear form
-                lastNameController.clear();
-                firstNameController.clear();
-                birthDateController.clear();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Client ajouté avec succès !')),
-                );
-              },
               backgroundColor: const Color(0xFFB6D8F2),
+              lastNameController: lastNameController,
+              firstNameController: firstNameController,
+              birthDateController: birthDateController,
+              context: context,
             ),
             const SizedBox(height: 20),
             const Text(

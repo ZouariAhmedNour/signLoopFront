@@ -66,7 +66,10 @@ class ContractApi {
     final url = Uri.parse('${UrlApi}contracts/$contractId');
     try {
       final response = await http.delete(url, headers: {'Content-Type': 'application/json'});
-      if (response.statusCode != 200) {
+      print('✅ Delete Response: Status ${response.statusCode}, Body: ${response.body}');
+      if (response.statusCode == 200) {
+        print('✅ Contract deleted successfully: $contractId');
+      } else {
         print('❌ API Error: Status ${response.statusCode}, Body: ${response.body}');
         throw Exception('Failed to delete contract, status code: ${response.statusCode}');
       }
