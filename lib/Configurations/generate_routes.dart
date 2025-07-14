@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:signloop/Configurations/app_routes.dart';
+import 'package:signloop/auth/forgot_password_page.dart';
 import 'package:signloop/contract/add_contract.dart';
 import 'package:signloop/contract/contract_page.dart';
 import 'package:signloop/contract/update_contract.dart';
@@ -11,8 +12,8 @@ import 'package:signloop/customer/customer_details.dart';
 import 'package:signloop/customer/customer_list_page.dart';
 import 'package:signloop/customer/customer_page.dart';
 import 'package:signloop/home.dart';
-import 'package:signloop/login/login_page.dart';
-import 'package:signloop/login/register_page.dart';
+import 'package:signloop/auth/login_page.dart';
+import 'package:signloop/auth/register_page.dart';
 import 'package:signloop/models/contract.dart';
 
 class GenerateRoutes {
@@ -47,6 +48,7 @@ class GenerateRoutes {
     ),
             GetPage(name: AppRoutes.loginPage, page:() => LoginPage()),
             GetPage(name: AppRoutes.registerPage, page:() => RegisterPage()),
+            GetPage(name: AppRoutes.forgotPasswordPage, page:() => ForgotPasswordPage()),
         ];
     }
 

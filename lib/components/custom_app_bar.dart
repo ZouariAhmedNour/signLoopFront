@@ -47,6 +47,13 @@ class CustomAppBar extends StatelessWidget {
                 print('Navigating to Home');
               },
             ),
+            IconButton(
+              icon : const Icon(Icons.logout, color: Colors.white),
+              onPressed: () {
+                Get.offAllNamed(AppRoutes.loginPage);
+                print('Logging out and navigating to Login');
+              },
+              ),
         ],
       ),
     );

@@ -8,7 +8,7 @@ class UserApi {
 
   /// Enregistre un utilisateur
   Future<String> register(User user) async {
-    final url = Uri.parse('${UrlApi}users'); 
+    final url = Uri.parse('${UrlApi}auth/register'); 
     print("➡️ POST $url");
     print("➡️ Body: ${jsonEncode(user.toJson())}");
 
@@ -52,14 +52,12 @@ class UserApi {
 
   /// Demande de reset password
   Future<String> requestResetPassword(String email) async {
-    final url = Uri.parse('${UrlApi}reset-password-request');
+    final url = Uri.parse('${UrlApi}auth/reset-password-request?email=$email');
     print("➡️ POST $url");
     print("➡️ Body: email=$email");
 
     final response = await http.post(
-      url,
-      body: {"email": email},
-    );
+      url);
 
     print("⬅️ Status: ${response.statusCode}");
     print("⬅️ Body: ${response.body}");
@@ -92,4 +90,23 @@ class UserApi {
     }
     throw Exception(response.body);
   }
+
+  // VERIFIER COMPTE PAR E-MAIL
+
+  Future<String> resendVerificationEmail(String email) async {
+  final url = Uri.parse('${UrlApi}auth/resend-verification?email=$email');
+  print("➡️ POST $url");
+
+  final response = await http.post(url);
+
+  print("⬅️ Status: ${response.statusCode}");
+  print("⬅️ Body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    return "Email de vérification renvoyé.";
+  } else {
+    throw Exception(response.body);
+  }
+}
+
 }

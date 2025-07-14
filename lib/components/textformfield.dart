@@ -7,6 +7,7 @@ class CustomTextFormField extends StatelessWidget {
   final bool readOnly;
   final VoidCallback? onTap;
   final String? Function(String?)? validator;
+  final bool obscureText;
 
   const CustomTextFormField({
     super.key,
@@ -16,6 +17,7 @@ class CustomTextFormField extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.validator,
+    this.obscureText = false,
   });
 
   @override
@@ -28,6 +30,7 @@ class CustomTextFormField extends StatelessWidget {
       ),
       child: TextFormField(
         controller: controller,
+        obscureText: obscureText,
         decoration: InputDecoration(
           prefixIcon: Icon(prefixIcon, color: const Color(0xFF1976D2)),
           border: InputBorder.none,
