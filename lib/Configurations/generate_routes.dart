@@ -11,6 +11,8 @@ import 'package:signloop/customer/customer_details.dart';
 import 'package:signloop/customer/customer_list_page.dart';
 import 'package:signloop/customer/customer_page.dart';
 import 'package:signloop/home.dart';
+import 'package:signloop/login/login_page.dart';
+import 'package:signloop/login/register_page.dart';
 import 'package:signloop/models/contract.dart';
 
 class GenerateRoutes {
@@ -43,6 +45,8 @@ class GenerateRoutes {
         return UpdateContractPage(contract: contract);
       },
     ),
+            GetPage(name: AppRoutes.loginPage, page:() => LoginPage()),
+            GetPage(name: AppRoutes.registerPage, page:() => RegisterPage()),
         ];
     }
 

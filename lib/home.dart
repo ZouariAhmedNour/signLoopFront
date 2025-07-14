@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:signloop/providers/auth_provider.dart';
 import 'Configurations/app_routes.dart';
 
-class Home extends StatelessWidget {
+class Home extends ConsumerWidget {
   const Home({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Accueil',
+        title:  Text(
+          'Accueil (${user?.nom ?? "Invité"})',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,

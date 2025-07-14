@@ -7,4 +7,6 @@ class AppRoutes {
   static const String customerDetails = '/customer_details';
   static const String addContractPage = '/add_contract';
   static const String updateContractPage = '/update_contract';
+  static const String loginPage = '/login_page';
+  static const String registerPage = '/register_page';
 }

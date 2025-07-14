@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       title: 'Sign Loop',
-      initialRoute: AppRoutes.home,
+      initialRoute: AppRoutes.loginPage,
       getPages: GenerateRoutes.getPages,  
     );
   }
