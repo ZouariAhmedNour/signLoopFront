@@ -103,7 +103,7 @@ class _ContractPageState extends ConsumerState<ContractPage> {
             child: Column(
               children: [
                 CustomAppBar(
-                  title: 'Liste des Contrats',
+                  title: 'Contrats',
                   onRefresh: () {
                     ref.refresh(contractProvider);
                     debugPrint('Contract list refreshed');

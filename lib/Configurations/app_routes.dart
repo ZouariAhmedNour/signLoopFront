@@ -10,4 +10,5 @@ class AppRoutes {
   static const String loginPage = '/login_page';
   static const String registerPage = '/register_page';
   static const String forgotPasswordPage = '/forgot_password_page';
+  static const String profilePage = '/profile_page';
 }

@@ -97,6 +97,13 @@ class Home extends ConsumerWidget {
                           color: const Color(0xFF7B68EE),
                           onTap: () => Get.toNamed(AppRoutes.contractPage),
                         ),
+                        _buildMenuCard(
+                          icon: Icons.settings_rounded,
+                          title: 'Profile',
+                          subtitle: 'Gérer votre profil',
+                          color: const Color(0xFF7B68EE),
+                          onTap: () => Get.toNamed(AppRoutes.profilePage),
+                        ),
                       ],
                     ),
                   ),

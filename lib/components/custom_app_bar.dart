@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:signloop/Configurations/app_routes.dart';
+import '../providers/auth_provider.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends ConsumerWidget {
   final String title;
   final VoidCallback? onRefresh;
   final bool showHomeButton;
@@ -15,7 +17,7 @@ class CustomAppBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -47,13 +49,24 @@ class CustomAppBar extends StatelessWidget {
                 print('Navigating to Home');
               },
             ),
-            IconButton(
-              icon : const Icon(Icons.logout, color: Colors.white),
-              onPressed: () {
-                Get.offAllNamed(AppRoutes.loginPage);
-                print('Logging out and navigating to Login');
-              },
-              ),
+             IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            tooltip: 'Déconnexion',
+            onPressed: () async {
+              // Vider l'état utilisateur
+              ref.read(authProvider.notifier).state = null;
+
+              // Optionnel: supprimer token de SharedPreferences
+              // final prefs = await SharedPreferences.getInstance();
+              // await prefs.remove('jwt_token');
+
+              // Aller à la page de login
+              Get.offAllNamed(AppRoutes.loginPage);
+
+              print('Utilisateur déconnecté');
+            },
+          ),
+         
         ],
       ),
     );

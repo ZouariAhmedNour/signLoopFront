@@ -15,6 +15,7 @@ import 'package:signloop/home.dart';
 import 'package:signloop/auth/login_page.dart';
 import 'package:signloop/auth/register_page.dart';
 import 'package:signloop/models/contract.dart';
+import 'package:signloop/profile/profile_page.dart';
 
 class GenerateRoutes {
     static final getPages = [
@@ -49,6 +50,7 @@ class GenerateRoutes {
             GetPage(name: AppRoutes.loginPage, page:() => LoginPage()),
             GetPage(name: AppRoutes.registerPage, page:() => RegisterPage()),
             GetPage(name: AppRoutes.forgotPasswordPage, page:() => ForgotPasswordPage()),
+            GetPage(name: AppRoutes.profilePage, page:() => ProfilePage()),
         ];
     }
 
