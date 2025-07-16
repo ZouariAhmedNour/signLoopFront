@@ -32,7 +32,7 @@ class _ContractPageState extends ConsumerState<ContractPage> {
         try {
           await ref.read(contractProvider.notifier).deleteContract(contractId);
           setState(() {}); // Rafraîchir l'interface
-          Get.back(); // Fermer le dialogue après succès
+          
           AwesomeDialog(
             context: context,
             dialogType: DialogType.success,
