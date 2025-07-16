@@ -31,7 +31,8 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
     _typeController.text = widget.contract.type ?? '';
     _creationDateController.text = widget.contract.creationDate?.toIso8601String().split('T')[0] ?? '';
     _paymentModeController.text = widget.contract.paymentMode ?? '';
-    _selectedCustomerId = widget.contract.customer?['customerId'] as int?;
+    //_selectedCustomerId = widget.contract.customer?['customerId'] as int?;
+    _selectedCustomerId = widget.contract.effectiveCustomerId;
 
       // Décoder l'image existante si présente
   if (widget.contract.cinPicBase64 != null) {
@@ -39,7 +40,12 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(cinImageProvider.notifier).state = bytes;
     });
-  }
+  } else {
+  // 🚨 Ici on vide l'image si le contrat n'en a pas
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ref.read(cinImageProvider.notifier).state = null;
+  });
+}
   }
 
   @override
@@ -79,24 +85,64 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
   }
 
   void _saveContract() {
-    if (_formKey.currentState!.validate() && _selectedCustomerId != null) {
-      final cinBytes = ref.read(cinImageProvider);
+  // Debug: Log the start of the save process
+  print("🔵 [DEBUG] Starting _saveContract process");
+
+  // Debug: Validate form and customer ID
+  print("🔍 [DEBUG] Validating form and checking _selectedCustomerId: $_selectedCustomerId");
+  if (_formKey.currentState!.validate() && _selectedCustomerId != null) {
+    print("✅ [DEBUG] Form validation passed and _selectedCustomerId is valid");
+
+    // Debug: Read cinImageProvider
+    final cinBytes = ref.read(cinImageProvider);
+    print("📸 [DEBUG] Retrieved cinBytes from cinImageProvider: ${cinBytes != null ? 'Not null, length: ${cinBytes.length}' : 'Null'}");
+
+    // Debug: Encode cinBytes to base64 if present
     String? base64Cin;
     if (cinBytes != null && cinBytes.isNotEmpty) {
+      print("🔄 [DEBUG] Encoding cinBytes to base64...");
       base64Cin = base64Encode(cinBytes);
+      print("✅ [DEBUG] base64Cin encoded: ${base64Cin.substring(0, 20)}... (truncated)");
+    } else {
+      print("⚠️ [DEBUG] No valid cinBytes to encode, setting base64Cin to null");
     }
-      final contract = Contract(
-        contractId: widget.contract.contractId,
-        type: _typeController.text,
-        creationDate: DateTime.parse(_creationDateController.text),
-        paymentMode: _paymentModeController.text,
-        customer: {'customerId': _selectedCustomerId},
-        cinPicBase64: base64Cin, 
-      );
-      ref.read(contractProvider.notifier).updateContract(contract);
-      Navigator.pop(context);
+
+    // Debug: Prepare contract data
+    print("📋 [DEBUG] Creating Contract object with data:");
+    print("   - contractId: ${widget.contract.contractId}");
+    print("   - type: ${_typeController.text}");
+    print("   - creationDate: ${_creationDateController.text}");
+    print("   - paymentMode: ${_paymentModeController.text}");
+    print("   - customerId: $_selectedCustomerId");
+    print("   - cinPicBase64: ${base64Cin != null ? 'Present (truncated: ${base64Cin.substring(0, 20)}...)' : 'Null'}");
+
+    final contract = Contract(
+      contractId: widget.contract.contractId,
+      type: _typeController.text,
+      creationDate: DateTime.parse(_creationDateController.text),
+      paymentMode: _paymentModeController.text,
+      customer: {'customerId': _selectedCustomerId},
+      cinPicBase64: base64Cin,
+    );
+
+    // Debug: Before updating contract
+    print("💾 [DEBUG] Updating contract in provider...");
+    ref.read(contractProvider.notifier).updateContract(contract);
+    print("✅ [DEBUG] Contract updated successfully");
+
+    // Debug: Navigation
+    print("🚪 [DEBUG] Popping navigation stack");
+    Navigator.pop(context);
+  } else {
+    print("❌ [DEBUG] Validation failed or _selectedCustomerId is null");
+    if (_formKey.currentState == null) {
+      print("⚠️ [DEBUG] Error: _formKey.currentState is null");
+    }
+    if (_selectedCustomerId == null) {
+      print("⚠️ [DEBUG] Error: _selectedCustomerId is null");
     }
   }
+}
 
   Future<void> _pickImage(ImageSource source) async {
   final picker = ImagePicker();
@@ -233,7 +279,7 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
                                 child: Text('${customer.prenom} ${customer.nom} (ID: ${customer.customerId})'),
                               );
                             }).toList(),
-                            onChanged: (value) => setState(() => _selectedCustomerId = value),
+                            onChanged: null,
                             validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
                           ),
                         ),

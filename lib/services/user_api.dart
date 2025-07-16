@@ -28,34 +28,64 @@ class UserApi {
 
   /// Connexion
   Future<User> login(String email, String password) async {
-    final url = Uri.parse('${UrlApi}auth/login');
-    final payload = {"email": email, "password": password};
+  final url = Uri.parse('${UrlApi}auth/login');
+  final payload = {"email": email, "password": password};
 
-    print("➡️ POST $url");
-    print("➡️ Body: ${jsonEncode(payload)}");
+  // Debug: Log the start of the login process
+  print("🔵 [DEBUG] Starting login process for email: $email");
+  print("➡️ [DEBUG] Preparing POST request to: $url");
+  print("➡️ [DEBUG] Payload to send: ${jsonEncode(payload)}");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(payload),
-    );
+  final response = await http.post(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode(payload),
+  );
 
-    print("⬅️ Status: ${response.statusCode}");
-    print("⬅️ Body: ${response.body}");
+  // Debug: Log the raw response details
+  print("⬅️ [DEBUG] Received response - Status Code: ${response.statusCode}");
+  print("⬅️ [DEBUG] Raw Response Body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final token = data["token"];
-      final userJson = data["user"];
+  if (response.statusCode == 200) {
+    // Debug: Log successful response parsing
+    print("✅ [DEBUG] Successfully received 200 OK response");
+    final data = jsonDecode(response.body);
 
-      // Sauvegarder le token
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("jwt_token", token);
+    // Debug: Log the decoded JSON data
+    print("📦 [DEBUG] Decoded JSON Data: $data");
 
-      return User.fromJson(userJson);
+    final token = data["token"];
+    final userJson = data["user"];
+
+    // Debug: Validate token and user data
+    print("🔑 [DEBUG] Extracted Token: $token");
+    print("👤 [DEBUG] Extracted User JSON: $userJson");
+
+    if (token == null || userJson == null) {
+      print("❌ [DEBUG] Error: Token or user data is null in response");
+      throw Exception("Missing token or user data in response");
     }
-    throw Exception(_extractErrorMessage(response));
+
+    // Debug: Log before saving token to SharedPreferences
+    print("💾 [DEBUG] Saving token to SharedPreferences...");
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("jwt_token", token);
+    print("💾 [DEBUG] Token saved successfully: $token");
+
+    // Debug: Log user creation
+    print("👤 [DEBUG] Creating User object from JSON...");
+    final user = User.fromJson(userJson);
+    print("✅ [DEBUG] User object created: $user");
+
+    return user;
+  } else {
+    // Debug: Log error case
+    print("❌ [DEBUG] Non-200 status code received: ${response.statusCode}");
+    final errorMessage = _extractErrorMessage(response);
+    print("❌ [DEBUG] Extracted Error Message: $errorMessage");
+    throw Exception(errorMessage);
   }
+}
 
   /// Récupère le token stocké
   Future<String?> _getToken() async {

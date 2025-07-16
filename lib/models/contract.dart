@@ -49,19 +49,23 @@ Map<String, dynamic> toJson() {
         : null,
   };
 
-  if (cinPicBase64 != null) {
-    // Tu as choisi une nouvelle image.
+
+  if (cinPicBase64?.isNotEmpty ?? false) {
     data['cinPic'] = cinPicBase64;
   } else {
-    // Ici, on décide : est-ce qu’on supprime la photo ?
-    // Par exemple, si tu ajoutes un booléen "removeImage" dans l’état:
-    // if (removeImage) {
-    //   data['removeCinPic'] = true;
-    // }
-    //
-    // Si tu ne fais rien, ça laisse l’ancienne.
+    // Ne rien mettre = ne pas toucher à l'image existante
+    // OU
+     data['cinPic'] = null; 
   }
 
   return data;
+}
+
+int? get effectiveCustomerId {
+  if (customerId != null) return customerId;
+  if (customer != null && customer!.containsKey('customerId')) {
+    return customer!['customerId'] as int?;
+  }
+  return null;
 }
 }
