@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:signloop/models/contract.dart';
 import 'package:signloop/providers/app_provider.dart';
 import 'package:signloop/components/elevatedbutton.dart';
 import 'package:signloop/components/textformfield.dart';
+import 'package:signloop/providers/contract_form_provider.dart';
 
 class AddContractPage extends ConsumerStatefulWidget {
   const AddContractPage({super.key});
@@ -58,11 +62,19 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
 
   Future<void> _saveContract() async {
     if (_formKey.currentState!.validate() && _selectedCustomerId != null) {
+      final cinBytes = ref.read(cinImageProvider);
+      // Encodage en Base64 si présent
+    String? base64Cin;
+    if (cinBytes != null && cinBytes.isNotEmpty) {
+      base64Cin = base64Encode(cinBytes);
+    }
       final contract = Contract(
         type: _typeController.text,
         creationDate: DateTime.parse(_creationDateController.text),
         paymentMode: _paymentModeController.text,
         customer: {'customerId': _selectedCustomerId},
+         cinPicBase64: base64Cin,
+        
       );
       try {
         await ref.read(contractProvider.notifier).addContract(contract);
@@ -85,26 +97,38 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
           dialogType: DialogType.error,
           animType: AnimType.bottomSlide,
           title: 'Erreur',
-          desc: 'Une erreur s\'est produite lors de la création du contrat. Veuillez réessayer.',
+          desc:
+              'Une erreur s\'est produite lors de la création du contrat. Veuillez réessayer.',
           btnOkOnPress: () {},
         ).show();
       }
     }
   }
 
+  Future<void> _pickImage(
+    BuildContext context,
+    WidgetRef ref,
+    ImageSource source,
+  ) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 75);
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      ref.read(cinImageProvider.notifier).state = bytes;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final customers = ref.watch(customerProvider);
+    final cinImageBytes = ref.watch(cinImageProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           'Ajouter un Contrat',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color(0xFF1976D2),
         elevation: 0,
@@ -119,10 +143,7 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1976D2),
-              Color(0xFF66BB6A),
-            ],
+            colors: [Color(0xFF1976D2), Color(0xFF66BB6A)],
           ),
         ),
         child: Column(
@@ -202,22 +223,38 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
                             value: _selectedCustomerId,
                             isExpanded: true,
                             decoration: const InputDecoration(
-                              prefixIcon: Icon(Icons.person_outline, color: Color(0xFF1976D2)),
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: Color(0xFF1976D2),
+                              ),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               hintText: 'Sélectionner un client',
                             ),
                             dropdownColor: Colors.white,
                             iconEnabledColor: const Color(0xFF1976D2),
-                            style: const TextStyle(color: Color(0xFF2D3744), fontSize: 16),
-                            items: customers.map<DropdownMenuItem<int>>((customer) {
+                            style: const TextStyle(
+                              color: Color(0xFF2D3744),
+                              fontSize: 16,
+                            ),
+                            items: customers.map<DropdownMenuItem<int>>((
+                              customer,
+                            ) {
                               return DropdownMenuItem<int>(
                                 value: customer.customerId,
-                                child: Text('${customer.prenom} ${customer.nom} (ID: ${customer.customerId})'),
+                                child: Text(
+                                  '${customer.prenom} ${customer.nom} (ID: ${customer.customerId})',
+                                ),
                               );
                             }).toList(),
-                            onChanged: (value) => setState(() => _selectedCustomerId = value),
-                            validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
+                            onChanged: (value) =>
+                                setState(() => _selectedCustomerId = value),
+                            validator: (value) => value == null
+                                ? 'Veuillez sélectionner un client'
+                                : null,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -234,7 +271,9 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
                           controller: _typeController,
                           hintText: 'Ex: Journalier, Mensuel, Annuel',
                           prefixIcon: Icons.assignment_outlined,
-                          validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          validator: (value) => (value?.isEmpty ?? true)
+                              ? 'Ce champ est requis'
+                              : null,
                         ),
                         const SizedBox(height: 24),
                         const Text(
@@ -252,7 +291,9 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
                           prefixIcon: Icons.calendar_today_outlined,
                           readOnly: true,
                           onTap: () => _selectDate(context),
-                          validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          validator: (value) => (value?.isEmpty ?? true)
+                              ? 'Ce champ est requis'
+                              : null,
                         ),
                         const SizedBox(height: 24),
                         const Text(
@@ -268,9 +309,94 @@ class _AddContractPageState extends ConsumerState<AddContractPage> {
                           controller: _paymentModeController,
                           hintText: 'Ex: Cash, Visa, Mastercard',
                           prefixIcon: Icons.payment_outlined,
-                          validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
+                          validator: (value) => (value?.isEmpty ?? true)
+                              ? 'Ce champ est requis'
+                              : null,
+                        ),
+                        const SizedBox(height: 24),
+                        Column(
+  mainAxisSize: MainAxisSize.min, 
+  crossAxisAlignment: CrossAxisAlignment.start, 
+  children: [
+ 
+    Padding(
+      padding: const EdgeInsets.only(top: 24.0), // Match your spacing
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        alignment: WrapAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            onPressed: () => _pickImage(context, ref, ImageSource.camera),
+            icon: const Icon(Icons.camera_alt, color: Colors.white),
+            label: const Text('Prendre une photo'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1976D2),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton.icon(
+            onPressed: () => _pickImage(context, ref, ImageSource.gallery),
+            icon: const Icon(Icons.photo_library, color: Colors.white),
+            label: const Text('Depuis galerie'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1976D2),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+          ),
+        ],
+      ),
+    ),
+if (cinImageBytes != null)
+  Padding(
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    child: Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(
+          cinImageBytes,
+          width: double.infinity,
+          height: 200,
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+  ),
+  TextButton.icon(
+  onPressed: () {
+    ref.read(cinImageProvider.notifier).state = null;
+  },
+  icon: const Icon(Icons.delete, color: Colors.red),
+  label: const Text('Retirer la photo', style: TextStyle(color: Colors.red)),
+  style: TextButton.styleFrom(
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    backgroundColor: const Color(0xFFF7FAFC),
+    foregroundColor: Colors.red,
+  ),
+),
+  ],
                         ),
                         const SizedBox(height: 30),
+
                         CustomElevatedButton(
                           onPressed: _saveContract,
                           child: const Row(

@@ -136,4 +136,6 @@ class ContractNotifier extends StateNotifier<List<Contract>> {
       throw e; // Propager l'erreur
     }
   }
+
+  
 }

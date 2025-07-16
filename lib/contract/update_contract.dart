@@ -1,8 +1,11 @@
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:signloop/models/contract.dart';
 import 'package:signloop/providers/app_provider.dart';
+import 'package:signloop/providers/contract_form_provider.dart';
 
 class UpdateContractPage extends ConsumerStatefulWidget {
   final Contract contract;
@@ -19,6 +22,8 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
   final _creationDateController = TextEditingController();
   final _paymentModeController = TextEditingController();
   int? _selectedCustomerId;
+  
+
 
   @override
   void initState() {
@@ -27,6 +32,14 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
     _creationDateController.text = widget.contract.creationDate?.toIso8601String().split('T')[0] ?? '';
     _paymentModeController.text = widget.contract.paymentMode ?? '';
     _selectedCustomerId = widget.contract.customer?['customerId'] as int?;
+
+      // Décoder l'image existante si présente
+  if (widget.contract.cinPicBase64 != null) {
+    final bytes = base64Decode(widget.contract.cinPicBase64!);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(cinImageProvider.notifier).state = bytes;
+    });
+  }
   }
 
   @override
@@ -67,17 +80,32 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
 
   void _saveContract() {
     if (_formKey.currentState!.validate() && _selectedCustomerId != null) {
+      final cinBytes = ref.read(cinImageProvider);
+    String? base64Cin;
+    if (cinBytes != null && cinBytes.isNotEmpty) {
+      base64Cin = base64Encode(cinBytes);
+    }
       final contract = Contract(
         contractId: widget.contract.contractId,
         type: _typeController.text,
         creationDate: DateTime.parse(_creationDateController.text),
         paymentMode: _paymentModeController.text,
         customer: {'customerId': _selectedCustomerId},
+        cinPicBase64: base64Cin, 
       );
       ref.read(contractProvider.notifier).updateContract(contract);
       Navigator.pop(context);
     }
   }
+
+  Future<void> _pickImage(ImageSource source) async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: source, imageQuality: 75);
+  if (pickedFile != null) {
+    final bytes = await pickedFile.readAsBytes();
+    ref.read(cinImageProvider.notifier).state = bytes;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -292,6 +320,113 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
                             validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
                           ),
                         ),
+                        const SizedBox(height: 24),
+// Row(
+//   children: [
+//     ElevatedButton.icon(
+//       onPressed: () => _pickImage(ImageSource.camera),
+//       icon: const Icon(Icons.camera_alt),
+//       label: const Text('Prendre une photo'),
+//     ),
+//     const SizedBox(width: 12),
+//     ElevatedButton.icon(
+//       onPressed: () => _pickImage(ImageSource.gallery),
+//       icon: const Icon(Icons.photo_library),
+//       label: const Text('Depuis galerie'),
+//     ),
+//   ],
+// ),
+// // Aperçu de l'image
+// if (ref.watch(cinImageProvider) != null)
+//   Padding(
+//     padding: const EdgeInsets.symmetric(vertical: 12),
+//     child: Image.memory(
+//       ref.watch(cinImageProvider)!,
+//       width: double.infinity,
+//       height: 200,
+//       fit: BoxFit.cover,
+//     ),
+//   ),
+//   TextButton.icon(
+//   onPressed: () {
+//     ref.read(cinImageProvider.notifier).state = null;
+//   },
+//   icon: const Icon(Icons.delete, color: Colors.red),
+//   label: const Text('Retirer la photo', style: TextStyle(color: Colors.red)),
+// ),
+
+Column(
+  mainAxisSize: MainAxisSize.min, // Allows shrink-wrapping
+  crossAxisAlignment: CrossAxisAlignment.start, // Match your original layout
+  children: [
+    ElevatedButton.icon(
+      onPressed: () => _pickImage(ImageSource.camera),
+      icon: const Icon(Icons.camera_alt, color: Colors.white),
+      label: const Text('Prendre une photo'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1976D2),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 2,
+      ),
+    ),
+    const SizedBox(width: 12),
+    ElevatedButton.icon(
+      onPressed: () => _pickImage(ImageSource.gallery),
+      icon: const Icon(Icons.photo_library, color: Colors.white),
+      label: const Text('Depuis galerie'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1976D2),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 2,
+      ),
+    ),
+  ],
+),
+// Aperçu de l'image
+if (ref.watch(cinImageProvider) != null)
+  Padding(
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    child: Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(
+          ref.watch(cinImageProvider)!,
+          width: double.infinity,
+          height: 200,
+          fit: BoxFit.cover,
+        ),
+      ),
+    ),
+  ),
+TextButton.icon(
+  onPressed: () {
+    ref.read(cinImageProvider.notifier).state = null;
+  },
+  icon: const Icon(Icons.delete, color: Colors.red),
+  label: const Text('Retirer la photo', style: TextStyle(color: Colors.red)),
+  style: TextButton.styleFrom(
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    backgroundColor: const Color(0xFFF7FAFC),
+    foregroundColor: Colors.red,
+  ),
+),
+
                         const SizedBox(height: 30),
                         ElevatedButton(
                           onPressed: _saveContract,

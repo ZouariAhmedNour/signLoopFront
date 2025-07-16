@@ -39,9 +39,12 @@ class ContractApi {
   Future<Contract?> addContract(Contract contract) async {
 
      final token = await _getToken();
+     print('✅ Token récupéré pour POST: $token');
     if (token == null) throw Exception("Aucun token trouvé");
 
     final url = Uri.parse('${UrlApi}contracts');
+     final payload = jsonEncode(contract.toJson());
+  print('✅ Payload envoyé: $payload');
     try {
       final response = await http.post(
         url,
@@ -49,8 +52,10 @@ class ContractApi {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
           },
-        body: jsonEncode(contract.toJson()),
+        body: payload,
       );
+        print('✅ Status code: ${response.statusCode}');
+  print('✅ Body response: ${response.body}');
       if (response.statusCode == 200) {
         return Contract.fromJson(jsonDecode(response.body));
       } else {
