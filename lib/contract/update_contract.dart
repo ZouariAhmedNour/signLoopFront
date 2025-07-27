@@ -366,6 +366,35 @@ class _UpdateContractPageState extends ConsumerState<UpdateContractPage> {
                             validator: (value) => (value?.isEmpty ?? true) ? 'Ce champ est requis' : null,
                           ),
                         ),
+
+                        // 🔹 Boutons de sélection rapide
+const SizedBox(height: 12),
+Wrap(
+  spacing: 10,
+  children: [
+    ChoiceChip(
+      label: const Text("Cash"),
+      selected: _paymentModeController.text.toLowerCase() == "cash",
+      onSelected: (_) {
+        setState(() => _paymentModeController.text = "Cash");
+      },
+    ),
+    ChoiceChip(
+      label: const Text("Visa"),
+      selected: _paymentModeController.text.toLowerCase() == "visa",
+      onSelected: (_) {
+        setState(() => _paymentModeController.text = "Visa");
+      },
+    ),
+    ChoiceChip(
+      label: const Text("Mastercard"),
+      selected: _paymentModeController.text.toLowerCase() == "mastercard",
+      onSelected: (_) {
+        setState(() => _paymentModeController.text = "Mastercard");
+      },
+    ),
+  ],
+),
                         const SizedBox(height: 24),
 // Row(
 //   children: [

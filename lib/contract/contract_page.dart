@@ -61,29 +61,13 @@ class _ContractPageState extends ConsumerState<ContractPage> {
     final contracts = ref.watch(contractProvider);
     final customers = ref.watch(customerProvider);
 
-    if (customers.isEmpty || contracts.isEmpty) {
+    if (customers.isEmpty ) {
       return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF42A5F5), Color(0xFF1976D2)],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: Colors.white),
-                SizedBox(height: 16),
-                Text('Chargement des contrats...', style: TextStyle(color: Colors.white, fontSize: 16)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+      body: Center(
+        child: CircularProgressIndicator(color: Colors.blue),
+      ),
+    );
+  }
 
     return WillPopScope(
       onWillPop: () async {

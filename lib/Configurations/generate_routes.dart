@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:signloop/Configurations/app_routes.dart';
 import 'package:signloop/auth/forgot_password_page.dart';
 import 'package:signloop/contract/add_contract.dart';
+import 'package:signloop/contract/contract_details.dart';
 import 'package:signloop/contract/contract_page.dart';
 import 'package:signloop/contract/update_contract.dart';
 import 'package:signloop/customer/add_customer.dart';
@@ -51,6 +52,16 @@ class GenerateRoutes {
             GetPage(name: AppRoutes.registerPage, page:() => RegisterPage()),
             GetPage(name: AppRoutes.forgotPasswordPage, page:() => ForgotPasswordPage()),
             GetPage(name: AppRoutes.profilePage, page:() => ProfilePage()),
-        ];
+   GetPage(
+  name: AppRoutes.contractDetails,
+  page: () {
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args == null || args['contractId'] == null) {
+      return const Scaffold(body: Center(child: Text('Contrat introuvable')));
+    }
+    return ContractDetailsPage(contractId: args['contractId']);
+  },
+),
+    ];
     }
 
