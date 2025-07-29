@@ -48,11 +48,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       // Mettre à jour authProvider
       ref.read(authProvider.notifier).state = user;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors du chargement: ${e.toString()}")),
-      );
-      Get.offAllNamed(AppRoutes.loginPage); // Si erreur, retour login
-    } finally {
+  if (e.toString().contains("403") || e.toString().contains("401")) {
+    // Token invalide, retour login
+    Get.offAllNamed(AppRoutes.loginPage);
+  } else {
+    // Affiche juste une erreur mais reste sur la page
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Erreur de profil : ${e.toString()}")),
+    );
+  }
+} finally {
       setState(() => loading = false);
     }
   }

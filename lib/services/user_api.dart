@@ -95,6 +95,8 @@ class UserApi {
 
   /// Récupérer le profil de l'utilisateur connecté
   Future<User> getMyProfile() async {
+    print("🌍 URL utilisée pour getMyProfile: ${UrlApi}user/me");
+
     final url = Uri.parse('${UrlApi}user/me');
     final token = await _getToken();
     if (token == null) throw Exception("Aucun token trouvé, veuillez vous reconnecter.");
@@ -104,7 +106,9 @@ class UserApi {
 
     final response = await http.get(
       url,
-      headers: {"Authorization": "Bearer $token"},
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"},
     );
 
     print("⬅️ Status: ${response.statusCode}");
@@ -124,13 +128,16 @@ class UserApi {
 
     print("➡️ PUT $url");
     print("   avec Authorization: Bearer $token");
+    print("🔑 Token envoyé : $token");
 
     final response = await http.put(
       url,
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token",
+        
       },
+      
       body: jsonEncode(user.toJson()),
     );
 
